@@ -5,7 +5,7 @@ Expose an HTTP API for inference.
 ## Install
 
 ```bash
-conda create -n <environment-name> python=3.11
+conda create -n <environment-name> python=3.10
 conda activate <environment-name>
 pip install -r requirements.txt
 ```

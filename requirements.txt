@@ -1,0 +1,4 @@
+ml_web_inference==0.1.2
+torchaudio==2.5.1
+requests==2.32.3
+tensorboardX==2.6.2.2

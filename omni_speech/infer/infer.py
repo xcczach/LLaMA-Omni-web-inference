@@ -19,7 +19,7 @@ import math
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
     chunk_size = math.ceil(len(lst) / n)  # integer division
-    return [lst[i:i+chunk_size] for i in range(0, len(lst), chunk_size)]
+    return [lst[i : i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
 def get_chunk(lst, n, k):
@@ -29,7 +29,9 @@ def get_chunk(lst, n, k):
 
 # Custom dataset class
 class CustomDataset(Dataset):
-    def __init__(self, questions, tokenizer, model_config, input_type, mel_size, conv_mode):
+    def __init__(
+        self, questions, tokenizer, model_config, input_type, mel_size, conv_mode
+    ):
         self.questions = questions
         self.tokenizer = tokenizer
         self.model_config = model_config
@@ -54,9 +56,11 @@ class CustomDataset(Dataset):
                 speech = torch.nn.functional.layer_norm(speech, speech.shape)
         elif self.input_type == "mel":
             speech = whisper.pad_or_trim(speech)
-            speech = whisper.log_mel_spectrogram(speech, n_mels=self.mel_size).permute(1, 0)
+            speech = whisper.log_mel_spectrogram(speech, n_mels=self.mel_size).permute(
+                1, 0
+            )
 
-        input_ids = tokenizer_speech_token(prompt, self.tokenizer, return_tensors='pt')
+        input_ids = tokenizer_speech_token(prompt, self.tokenizer, return_tensors="pt")
 
         return input_ids, speech, torch.LongTensor([speech.shape[0]])
 
@@ -79,11 +83,29 @@ def ctc_postprocess(tokens, blank):
     hyp = " ".join(list(map(str, hyp)))
     return hyp
 
+
 # DataLoader
-def create_data_loader(questions, tokenizer, model_config, input_type, mel_size, conv_mode, batch_size=1, num_workers=4):
+def create_data_loader(
+    questions,
+    tokenizer,
+    model_config,
+    input_type,
+    mel_size,
+    conv_mode,
+    batch_size=1,
+    num_workers=4,
+):
     assert batch_size == 1, "batch_size must be 1"
-    dataset = CustomDataset(questions, tokenizer, model_config, input_type, mel_size, conv_mode)
-    data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
+    dataset = CustomDataset(
+        questions, tokenizer, model_config, input_type, mel_size, conv_mode
+    )
+    data_loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        shuffle=False,
+        collate_fn=collate_fn,
+    )
     return data_loader
 
 
@@ -91,7 +113,9 @@ def eval_model(args):
     # Model
     disable_torch_init()
     model_path = os.path.expanduser(args.model_path)
-    tokenizer, model, context_len = load_pretrained_model(model_path, args.model_base, is_lora=args.is_lora, s2s=args.s2s)
+    tokenizer, model, context_len = load_pretrained_model(
+        model_path, args.model_base, is_lora=args.is_lora, s2s=args.s2s
+    )
 
     questions = json.load(open(os.path.expanduser(args.question_file), "r"))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
@@ -99,17 +123,28 @@ def eval_model(args):
     os.makedirs(os.path.dirname(answers_file), exist_ok=True)
     ans_file = open(answers_file, "w")
 
-    data_loader = create_data_loader(questions, tokenizer, model.config, args.input_type, args.mel_size, args.conv_mode)
+    data_loader = create_data_loader(
+        questions,
+        tokenizer,
+        model.config,
+        args.input_type,
+        args.mel_size,
+        args.conv_mode,
+    )
 
-    for (input_ids, speech_tensor, speech_length), item in tqdm(zip(data_loader, questions), total=len(questions)):
+    for (input_ids, speech_tensor, speech_length), item in tqdm(
+        zip(data_loader, questions), total=len(questions)
+    ):
         idx = item["id"]
         try:
             answer = item["conversations"][1]["value"]
         except:
             answer = None
-        input_ids = input_ids.to(device='cuda', non_blocking=True)
-        speech_tensor = speech_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True)
-        speech_length = speech_length.to(device='cuda', non_blocking=True)
+        input_ids = input_ids.to(device="cuda", non_blocking=True)
+        speech_tensor = speech_tensor.to(
+            dtype=torch.float16, device="cuda", non_blocking=True
+        )
+        speech_length = speech_length.to(device="cuda", non_blocking=True)
 
         with torch.inference_mode():
             if args.s2s:
@@ -142,9 +177,13 @@ def eval_model(args):
                 )
                 output_ids = outputs
 
-        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[
+            0
+        ].strip()
         if args.s2s:
-            output_units = ctc_postprocess(output_units, blank=model.config.unit_vocab_size)
+            output_units = ctc_postprocess(
+                output_units, blank=model.config.unit_vocab_size
+            )
 
         print(f"H-{idx}\t{outputs}")
         print(f"T-{idx}\t{answer}")
@@ -152,9 +191,24 @@ def eval_model(args):
             print(f"U-{idx}\t{output_units}")
 
         if args.s2s:
-            ans_file.write(json.dumps({"question_id": idx, "prediction": outputs, "prediction_units": output_units, "answer": answer}) + "\n")
+            ans_file.write(
+                json.dumps(
+                    {
+                        "question_id": idx,
+                        "prediction": outputs,
+                        "prediction_units": output_units,
+                        "answer": answer,
+                    }
+                )
+                + "\n"
+            )
         else:
-            ans_file.write(json.dumps({"question_id": idx, "prediction": outputs, "answer": answer}) + "\n")
+            ans_file.write(
+                json.dumps(
+                    {"question_id": idx, "prediction": outputs, "answer": answer}
+                )
+                + "\n"
+            )
         # ans_file.flush()
     ans_file.close()
 

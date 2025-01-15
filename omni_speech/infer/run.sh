@@ -6,7 +6,7 @@ VOCODER_CKPT=vocoder/g_00500000
 VOCODER_CFG=vocoder/config.json
 
 python omni_speech/infer/infer.py \
-    --model-path Llama-3.1-8B-Omni \
+    --model-path ICTNLP/Llama-3.1-8B-Omni \
     --question-file $ROOT/question.json \
     --answer-file $ROOT/answer.json \
     --num-chunks 1 \

@@ -5,3 +5,5 @@ vocoder/
 __pycache__/
 process_log.txt
 nohup.out
+output_audio.wav
+fairseq/
