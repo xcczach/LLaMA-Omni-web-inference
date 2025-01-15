@@ -27,6 +27,7 @@ from omni_speech.datasets.preprocess import tokenizer_speech_token
 from fairseq.models.text_to_speech.vocoder import CodeHiFiGANVocoder
 import whisper
 import json
+import setproctitle
 
 tokenizer = None
 model = None
@@ -141,6 +142,7 @@ def hangup():
 
 
 if __name__ == "__main__":
+    setproctitle.setproctitle("llamaomni-web-inference")
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=9234)
     parser.add_argument("--api-name", type=str, default="llamaomni")
