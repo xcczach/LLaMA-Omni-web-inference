@@ -136,8 +136,9 @@ def init():
 
 
 def hangup():
-    global client
-    del client
+    global tokenizer, model
+    del tokenizer
+    del model
     torch.cuda.empty_cache()
 
 
