@@ -7,3 +7,4 @@ process_log.txt
 nohup.out
 output_audio.wav
 fairseq/
+installation_complete
