@@ -12,8 +12,6 @@ from ml_web_inference import (
     expose,
     Request,
     StreamingResponse,
-    get_proper_device,
-    get_model_size_mb,
 )
 import torch
 import io
